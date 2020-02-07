@@ -1,7 +1,7 @@
 import UIKit
 
 protocol LocalizationProvider {
-    var translationKey: String? { get }
+    var translationKey: String { get }
     var accessibilityHintKey: String? { get }
     var accessibilityLabelKey: String? { get }
     var accessibilityValueKey: String? { get }
@@ -13,7 +13,7 @@ struct LocaliciousData: LocalizationProvider {
     let accessibilityHintKey: String?
     let accessibilityLabelKey: String?
     let accessibilityValueKey: String?
-    let translationKey: String?
+    let translationKey: String
     let translationArgs: [CVarArg]?
 }
 
@@ -35,8 +35,8 @@ enum LocaliciousQuantity: String {
 }
 
 extension LocalizationProvider {
-    var translation: String? {
-        return translationKey.map(translation) ?? nil
+    var translation: String {
+        return translation(forKey: translationKey) ?? translationKey
     }
 
     var accessibilityHint: String? {
