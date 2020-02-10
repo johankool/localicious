@@ -149,7 +149,7 @@ const newlineForPlatform = platform => {
 
 const substitute = (value, valueSubstitutions, newline) => {
   Object.keys(valueSubstitutions).forEach(search => {
-    value = value.replace(`{{${search}}}`, valueSubstitutions[search]);
+    value = value.split(`{{${search}}}`).join(valueSubstitutions[search]);
   });
   value = value.split(`\n`).join(newline);
   return value;
