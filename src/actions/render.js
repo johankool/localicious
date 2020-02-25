@@ -147,7 +147,36 @@ const newlineForPlatform = platform => {
   }
 };
 
-const substitute = (value, valueSubstitutions, newline) => {
+const percentageForPlatform = platform => {
+  switch (platform) {
+    case platformKeywords.ANDROID:
+      return "%";
+      // return "&#37;";
+    case platformKeywords.IOS:
+      return "%%";
+  }
+};
+
+const substitute = (value, valueSubstitutions, newline, percentage) => {
+  // Find all % which are NOT followed with [0...9]{{[s,d]}}
+  // and replace with value from percentage
+  
+  // Official implementation that doesn't work
+  // value = value.replace(`/%(\D|$)/gm`, percentage + `$1`)
+
+  // Hacky workaround that works
+  value = value.split(`%1{{`).join(`§1{{`);
+  value = value.split(`%2{{`).join(`§2{{`);
+  value = value.split(`%3{{`).join(`§3{{`);
+  value = value.split(`%4{{`).join(`§4{{`);
+  value = value.split(`%5{{`).join(`§5{{`);
+  value = value.split(`%6{{`).join(`§6{{`);
+  value = value.split(`%7{{`).join(`§7{{`);
+  value = value.split(`%8{{`).join(`§8{{`);
+  value = value.split(`%9{{`).join(`§9{{`);
+  value = value.split(`%`).join(percentage);
+  value = value.split(`§`).join(`%`);
+
   Object.keys(valueSubstitutions).forEach(search => {
     value = value.split(`{{${search}}}`).join(valueSubstitutions[search]);
   });
@@ -238,6 +267,7 @@ const createLocalizationView = (translations, platform) => {
   const substitutions = substitutionsForPlatform(platform);
   const delimiter = keyDelimiterForPlatform(platform);
   const newline = newlineForPlatform(platform);
+  const percentage = percentageForPlatform(platform);
   const copyViews = translations
     .filter(t => groupKeywords.COPY in t)
     .map(t =>
@@ -246,7 +276,8 @@ const createLocalizationView = (translations, platform) => {
         [...t.keyPath, groupKeywords.COPY],
         delimiter,
         substitutions,
-        newline
+        newline,
+        percentage
       )
     );
 
@@ -256,21 +287,21 @@ const createLocalizationView = (translations, platform) => {
       const keyword = groupKeywords.ACCESSIBILITY;
       const group = t[keyword];
       return Object.keys(group).map(key =>
-        createTranslationView(group[key], [...t.keyPath, keyword, key], delimiter, substitutions, newline)
+        createTranslationView(group[key], [...t.keyPath, keyword, key], delimiter, substitutions, newline, percentage)
       );
     });
   const allViews = [...copyViews, ...flatten(accessibilityViews)];
   return groupByKey(allViews, val => val.type);
 };
 
-const createTranslationView = (translation, keyPath, delimiter, substitutions, newline) => {
+const createTranslationView = (translation, keyPath, delimiter, substitutions, newline, percentage) => {
   const key = keyPath.join(delimiter);
   switch (translation.type) {
     case SINGULAR:
       return {
         key,
         type: translation.type,
-        value: substitute(translation.translation, substitutions, newline)
+        value: substitute(translation.translation, substitutions, newline, percentage)
       };
     case PLURAL:
       return {
@@ -279,7 +310,7 @@ const createTranslationView = (translation, keyPath, delimiter, substitutions, n
         value: Object.keys(translation.translation).map(quantity => {
           return {
             quantity,
-            value: substitute(translation.translation[quantity], substitutions)
+            value: substitute(translation.translation[quantity], substitutions, newline, percentage)
           };
         })
       };
