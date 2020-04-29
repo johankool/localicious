@@ -118,23 +118,27 @@ const substitutionsForPlatform = platform => {
   switch (platform) {
     case platformKeywords.ANDROID:
       // prettier-ignore
-      return {
-        "{{s}}": "$s",
-        "{{d}}": "$d",
-        "\n": "\\n",
-        "@": "\@", // eslint-disable-line no-useless-escape
-        "?": "\?", // eslint-disable-line no-useless-escape
+      return [
         // Important: & should be substituted before we introduce new ampersands as part of our substitutions
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;"
-      };
+        { search: "&", replace: "&amp;" },
+        // Important: % should be substituted before we substitute {{s}} and {{d}}
+        { search: /%(?!\d{{s}}|\d{{d}})/, replace: "&#37;" },
+        { search: "{{s}}", replace: "$s" },
+        { search: "{{d}}", replace: "$d" },
+        { search: "\n", replace: "\\n" },
+        { search: "@", replace: "\@" }, // eslint-disable-line no-useless-escape
+        { search: "?", replace: "\?" }, // eslint-disable-line no-useless-escape
+        { search: "<", replace: "&lt;" },
+        { search: ">", replace: "&gt;" },
+        { search: "\"", replace: "&quot;" },
+      ];
     case platformKeywords.IOS:
-      return {
-        "{{s}}": "$@",
-        "{{d}}": "$d"
-      };
+      return [
+        // Important: % should be substituted before we substitute {{s}} and {{d}}
+        { search: /%(?!\d{{s}}|\d{{d}})/, replace: "%%" },
+        { search: "{{s}}", replace: "$@" },
+        { search: "{{d}}", replace: "$d" }
+      ];
   }
 };
 
@@ -148,8 +152,8 @@ const keyDelimiterForPlatform = platform => {
 };
 
 const substitute = (value, valueSubstitutions) => {
-  Object.keys(valueSubstitutions).forEach(search => {
-    value = value.split(`${search}`).join(valueSubstitutions[search]);
+  valueSubstitutions.forEach(substitution => {
+    value = value.split(substitution.search).join(substitution.replace);
   });
   return value;
 };
